@@ -37,6 +37,29 @@ class UsersQueriesMixin:
         new_image: Optional[str]
     ) -> Record: ...
 
+class ClientsQueriesMixin:
+    async def get_client_by_client_id(
+        self, conn: Connection, *, client_id: str
+    ) -> Record: ...
+    async def create_new_client(
+        self,
+        conn: Connection,
+        *,
+        client_id: str,
+        salt: str,
+        hashed_secret: str
+    ) -> Record: ...
+    async def update_client_by_client_id(
+        self,
+        conn: Connection,
+        *,
+        client_id: str,
+        new_client_id: str,
+        new_salt: str,
+        new_secret: str,
+    ) -> Record: ...
+
+
 class ProfilesQueriesMixin:
     async def is_user_following_for_another(
         self, conn: Connection, *, follower_username: str, following_username: str
@@ -113,6 +136,7 @@ class ArticlesQueriesMixin:
 class Queries(
     TagsQueriesMixin,
     UsersQueriesMixin,
+    ClientsQueriesMixin,
     ProfilesQueriesMixin,
     CommentsQueriesMixin,
     ArticlesQueriesMixin,

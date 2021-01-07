@@ -33,6 +33,7 @@ ALLOWED_HOSTS: List[str] = config(
 
 #JWT
 JWT_SUBJECT: str = config("JWT_SUBJECT", cast=str, default="access")
+JWT_ALGORITHM: str = config("JWT_ALGORITHM", cast=str, default="HS256")
 
 #OAuth2 configuration
 ACCESS_TOKEN_EXPIRE_MINUTES: int = config("ACCESS_TOKEN_EXPIRE_MINUTES", cast=int, default=60 * 24 * 7)

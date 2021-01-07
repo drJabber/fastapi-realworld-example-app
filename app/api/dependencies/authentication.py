@@ -3,9 +3,12 @@ from typing import Callable, Optional
 from fastapi import Depends, HTTPException, Security
 
 # from fastapi.security import APIKeyHeader
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2, OAuth2PasswordBearer
+from fastapi.security.utils import get_authorization_scheme_param
+from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 
-from starlette import requests, status
+from starlette import status
+from starlette.requests import Request
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.dependencies.database import get_repository
@@ -31,6 +34,33 @@ HEADER_KEY = "Authorization"
 #                 status_code=original_auth_exc.status_code,
 #                 detail=strings.AUTHENTICATION_REQUIRED,
 #             )
+
+class Oauth2ClientCredentials(OAuth2):
+    def __init__(
+        self,
+        tokenUrl: str,
+        scheme_name: str = None,
+        scopes: dict = None,
+        auto_error: bool = True,
+    ):
+        if not scopes:
+            scopes = {}
+        flows = OAuthFlowsModel(clientCredentials={"tokenUrl": tokenUrl, "scopes": scopes})
+        super().__init__(flows=flows, scheme_name=scheme_name, auto_error=auto_error)
+
+    async def __call__(self, request: Request) -> Optional[str]:
+        authorization: str = request.headers.get("Authorization")
+        scheme, param = get_authorization_scheme_param(authorization)
+        if not authorization or scheme.lower() != "bearer":
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=strings.NOT_AUTHENTICATED,
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            else:
+                return None
+        return param
 
 
 def get_current_user_authorizer(*, required: bool = True) -> Callable:  # type: ignore
@@ -80,10 +110,12 @@ def _get_authorization_token_retriever(*,
     return _get_authorization_token if required else _get_authorization_token_optional
 
 
-async def _get_authorization_token(token: str = Depends(OAuth2PasswordBearer(tokenUrl="api/users/token"))) -> str:
+# async def _get_authorization_token(token: str = Depends(OAuth2PasswordBearer(tokenUrl="api/users/token"))) -> str:
+async def _get_authorization_token(token: str = Depends(Oauth2ClientCredentials(tokenUrl="api/users/token"))) -> str:
     return token
 
-async def _get_authorization_token_optional(authorization: Optional[str] = Depends(OAuth2PasswordBearer(tokenUrl="api/users/token"))) -> str:
+# async def _get_authorization_token_optional(authorization: Optional[str] = Depends(OAuth2PasswordBearer(tokenUrl="api/users/token"))) -> str:
+async def _get_authorization_token_optional(authorization: Optional[str] = Depends(Oauth2ClientCredentials(tokenUrl="api/users/token"))) -> str:
     if authorization:
         return _get_authorization_token(authorization)
 
@@ -120,3 +152,5 @@ async def _get_current_user_optional(
         return await _get_current_user(repo, token)
 
     return None
+
+    

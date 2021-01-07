@@ -1,5 +1,6 @@
 from app.db.errors import EntityDoesNotExist
 from app.db.repositories.users import UsersRepository
+from app.db.repositories.clients import ClientsRepository
 
 
 async def check_username_is_taken(repo: UsersRepository, username: str) -> bool:
@@ -18,3 +19,13 @@ async def check_email_is_taken(repo: UsersRepository, email: str) -> bool:
         return False
 
     return True
+
+async def check_client_id_is_taken(repo: ClientsRepository, client_id: str) -> bool:
+    try:
+        await repo.get_client_by_client_id(client_id=client_id)
+    except EntityDoesNotExist:
+        return False
+
+    return True
+
+

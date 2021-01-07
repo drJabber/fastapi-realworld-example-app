@@ -6,7 +6,8 @@ from pydantic import ValidationError
 
 from app.core import config
 from app.models.domain.users import User
-from app.models.schemas.jwt import JWTMeta, JWTUser
+from app.models.domain.clients import Client
+from app.models.schemas.jwt import JWTMeta, JWTClient, JWTUser
 
 # JWT_SUBJECT = "access"
 # ALGORITHM = "HS256"
@@ -39,10 +40,32 @@ def create_refresh_token_for_user(user: User, secret_key: str) -> str:
         expires_delta=timedelta(minutes=config.REFRESH_TOKEN_EXPIRE_MINUTES),
     )
 
+def create_access_token_for_client(client: Client, secret_key: str) -> str:
+    return create_jwt_token(
+        jwt_content=JWTClient(client_id=client.client_id).dict(),
+        secret_key=secret_key,
+        expires_delta=timedelta(minutes=config.ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
+
+def create_refresh_token_for_client(client: Client, secret_key: str) -> str:
+    return create_jwt_token(
+        jwt_content=JWTClient(client_id=client.client_id).dict(),
+        secret_key=secret_key,
+        expires_delta=timedelta(minutes=config.REFRESH_TOKEN_EXPIRE_MINUTES),
+    )
+
 
 def get_username_from_token(token: str, secret_key: str) -> str:
     try:
         return JWTUser(**jwt.decode(token, secret_key, algorithms=[config.JWT_ALGORITHM])).username
+    except jwt.PyJWTError as decode_error:
+        raise ValueError("unable to decode JWT token") from decode_error
+    except ValidationError as validation_error:
+        raise ValueError("malformed payload in token") from validation_error
+
+def get_client_id_from_token(token: str, secret_key: str) -> str:
+    try:
+        return JWTClient(**jwt.decode(token, secret_key, algorithms=[config.JWT_ALGORITHM])).client_id
     except jwt.PyJWTError as decode_error:
         raise ValueError("unable to decode JWT token") from decode_error
     except ValidationError as validation_error:

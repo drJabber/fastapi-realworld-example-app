@@ -34,6 +34,12 @@ class Users(TypedTable):
     id: int
     username: str
 
+class Clients(TypedTable):
+    __table__ = "clients"
+
+    id: int
+    client_id: str
+
 
 class Articles(TypedTable):
     __table__ = "articles"
@@ -69,6 +75,7 @@ class Favorites(TypedTable):
 
 
 users = Users()
+clients = Clients()
 articles = Articles()
 tags = Tags()
 articles_to_tags = ArticlesToTags()
