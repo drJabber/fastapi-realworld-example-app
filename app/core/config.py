@@ -31,6 +31,13 @@ ALLOWED_HOSTS: List[str] = config(
     default="",
 )
 
+#JWT
+JWT_SUBJECT: str = config("JWT_SUBJECT", cast=str, default="access")
+
+#OAuth2 configuration
+ACCESS_TOKEN_EXPIRE_MINUTES: int = config("ACCESS_TOKEN_EXPIRE_MINUTES", cast=int, default=60 * 24 * 7)
+REFRESH_TOKEN_EXPIRE_MINUTES: int = config("REFRESH_TOKEN_EXPIRE_MINUTES", cast=int, default=60 * 24 * 30)
+
 # logging configuration
 
 LOGGING_LEVEL = logging.DEBUG if DEBUG else logging.INFO
